@@ -1,0 +1,6 @@
+{
+  "name": "Shees Steel Doors",
+  "description": "Premium luxury steel doors catalog, interactive visualizer, and quote builder.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
