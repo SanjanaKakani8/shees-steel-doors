@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ImageOff } from 'lucide-react';
 import { useDoors } from '../context/DoorsContext';
+import { useNavigate } from "react-router-dom"; 
 
 function GalleryImage({ src, alt }: { src: string; alt: string }) {
   const [failed, setFailed] = useState(false);
@@ -28,6 +29,7 @@ function GalleryImage({ src, alt }: { src: string; alt: string }) {
 
 export default function Gallery() {
   const { doors } = useDoors();
+  const navigate = useNavigate();
 
   return (
     <div className="bg-[#FAF9F6]">
@@ -50,8 +52,9 @@ export default function Gallery() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {doors.map((door) => (
               <div
-                key={door.id}
-                className="group relative aspect-[3/4] bg-stone-100 border border-stone-200 overflow-hidden"
+              key={door.id}
+              onClick={() => navigate(`/catalog/${door.id}`)}
+              className="group relative aspect-[3/4] bg-stone-100 border border-stone-200 overflow-hidden cursor-pointer hover:shadow-xl transition-all duration-300"
               >
                 <GalleryImage src={door.imageUrl} alt={door.name} />
                 <div className="absolute inset-x-0 bottom-0 bg-stone-950/80 text-stone-100 px-2 py-1.5">
