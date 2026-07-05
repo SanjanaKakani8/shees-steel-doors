@@ -21,7 +21,6 @@ export default function HomeSearchStation({
 }: HomeSearchStationProps) {
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedHandle, setSelectedHandle] = useState('all');
   const [searchActive, setSearchActive] = useState(true); // Default to active search state
   
   // Modal State for adding new door
@@ -48,13 +47,6 @@ export default function HomeSearchStation({
   const [formPreset, setFormPreset] = useState('ptr-700');
   const [formHandles, setFormHandles] = useState<string[]>(['left', 'right']);
 
-  const handlePositions = [
-    { id: 'all', label: 'All Handles', description: 'Show all designs' },
-    { id: 'left', label: 'Left Handle', description: 'Left-aligned latch' },
-    { id: 'right', label: 'Right Handle', description: 'Right-aligned latch' },
-    { id: 'middle', label: 'Middle Handle', description: 'Center pull or double seam' },
-  ];
-
   // Helper to get active finish for a specific door
   const getSelectedFinish = (doorId: string, finishes: string[]) => {
     return doorFinishes[doorId] || finishes[0] || '';
@@ -73,31 +65,13 @@ export default function HomeSearchStation({
     'Side Glass Panel (SGBH)'
   ];
 
-  // Mapping each original model to its compatible handle position(s)
-  const handleMapping: Record<string, string[]> = {
-    'ptr-131': ['left'],
-    'ptr-88': ['left'],
-    'ptr-125': ['left', 'right'],
-    'ptr-100': ['left', 'right'],
-    'ptr-220': ['left', 'right'],
-    'ptr-55': ['left', 'right', 'middle'],
-    'ptr-700': ['right', 'middle'],
-    'ptr-21': ['right'],
-    'ptr-311': ['middle'],
-    'ptr-66': ['middle']
-  };
-
-  // Filtering doors based on search string and selected handle position
+  // Filtering doors based on search string
   const filteredDoors = doors.filter((door) => {
-    const matchesSearch = 
-      door.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      door.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      door.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    // Check handles compatibility
-    const compatible = (door as any).compatibleHandles || handleMapping[door.id] || ['left', 'right'];
-    const matchesHandle = selectedHandle === 'all' || compatible.includes(selectedHandle);
-    return matchesSearch && matchesHandle;
+    return (
+      door.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      door.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      door.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
   });
 
   const handleSearchClick = () => {
@@ -109,14 +83,9 @@ export default function HomeSearchStation({
     setSearchQuery(term);
   };
 
-  const handleHandleSelect = (posId: string) => {
-    setSelectedHandle(posId);
-  };
-
   const handleClearSearch = () => {
     setSearchInput('');
     setSearchQuery('');
-    setSelectedHandle('all');
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
@@ -278,39 +247,6 @@ export default function HomeSearchStation({
                 </div>
               </div>
             </div>
-
-            {/* Handle Positions Grid */}
-            <div className="space-y-2.5 mt-6 pt-6 border-t border-stone-100 transition-all">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-sky-950 font-bold block">
-                Filter by Door Handle Placement
-              </span>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {handlePositions.map((pos) => {
-                  const isSelected = selectedHandle === pos.id;
-                  let activeClass = '';
-                  if (isSelected) {
-                    activeClass = 'bg-gradient-to-r from-sky-600 to-blue-650 text-stone-50 border-sky-600 font-bold shadow-md';
-                  } else {
-                    activeClass = 'bg-stone-50 text-stone-500 border-stone-200/60 hover:text-stone-950 hover:bg-stone-100 hover:border-stone-300';
-                  }
-
-                  return (
-                    <button
-                      key={pos.id}
-                      onClick={() => handleHandleSelect(pos.id)}
-                      className={`px-3 py-2.5 text-left border transition-all duration-200 cursor-pointer ${activeClass}`}
-                    >
-                      <div className="text-[10px] uppercase tracking-wider font-display font-bold">
-                        {pos.label}
-                      </div>
-                      <div className="text-[8px] font-mono opacity-80 mt-0.5 uppercase tracking-wide">
-                        {pos.description}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
           </div>
         )}
 
@@ -323,7 +259,7 @@ export default function HomeSearchStation({
                   <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
                   Showing {filteredDoors.length} Available Option{filteredDoors.length !== 1 ? 's' : ''}
                 </span>
-                {(searchInput || searchQuery || selectedHandle !== 'all') && (
+                {(searchInput || searchQuery) && (
                   <button
                     onClick={handleClearSearch}
                     className="px-2 py-1 bg-stone-100 hover:bg-stone-200 border border-stone-300 text-[9px] font-mono font-bold uppercase tracking-wider text-stone-600 hover:text-stone-900 transition"
@@ -377,10 +313,9 @@ export default function HomeSearchStation({
                             <span>{door.specs.lockingPoints} Locking Points</span>
                           </div>
                           
-                          <div className="flex items-center gap-1.5 text-[8px] font-mono bg-stone-100 text-stone-600 px-2 py-0.5 border border-stone-200 w-fit">
-                            <span className="uppercase text-stone-400">Handles:</span>
-                            <span className="font-bold text-stone-700 uppercase">
-                              {((door as any).compatibleHandles || []).join(', ') || 'Left, Right'}
+                          <div className="flex items-center gap-1.5 text-[8px] font-mono bg-stone-100 text-stone-600 px-2 py-0.5 border border-stone-200 w-fit max-w-full">
+                            <span className="font-bold text-stone-700 truncate">
+                              {door.description}
                             </span>
                           </div>
                         </div>

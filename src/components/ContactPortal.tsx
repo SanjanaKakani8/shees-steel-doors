@@ -1,16 +1,39 @@
 import React, { useState } from 'react';
 import { BRANCHES, CONTACT_PERSONS } from '../data';
-import { MapPin, Phone, MessageSquare, Clock, Shield, Navigation } from 'lucide-react';
+import { MapPin, Phone, MessageSquare, Shield } from 'lucide-react';
+import BranchCard from './BranchCard';
 
 export default function ContactPortal() {
   const [query, setQuery] = useState({ name: '', phone: '', msg: '' });
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSendQuery = (e: React.FormEvent) => {
+  const handleSendQuery = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.name || !query.phone || !query.msg) {
       alert('Please fill out all fields before sending your message.');
       return;
     }
+
+    // Best-effort submission to the backend so the business also has a
+    // record of the inquiry, independent of WhatsApp. This never blocks
+    // the WhatsApp handoff below, even if the API is unreachable.
+    setSubmitting(true);
+    try {
+      await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: query.name,
+          phone: query.phone,
+          message: query.msg,
+        }),
+      });
+    } catch (err) {
+      console.error('Contact API submission failed (continuing to WhatsApp):', err);
+    } finally {
+      setSubmitting(false);
+    }
+
     const message = `✨ *SHEES STEEL DOORS WEB INQUIRY* ✨
 👤 Name: ${query.name}
 📞 Phone: ${query.phone}
@@ -42,60 +65,9 @@ export default function ContactPortal() {
           {/* LEFT: Showroom Branch Cards */}
           <div className="lg:col-span-7 space-y-6 flex flex-col justify-between">
             <div className="grid sm:grid-cols-2 gap-6">
-              {BRANCHES.map((branch, index) => {
-                const isMain = index === 0;
-                return (
-                  <div 
-                    key={branch.name}
-                    id={`branch-card-${branch.type.toLowerCase().replace(' ', '-')}`}
-                    className={`border p-6 flex flex-col justify-between text-left space-y-4 shadow-sm transition-all duration-300 transform hover:-translate-y-1 ${
-                      isMain 
-                        ? 'bg-gradient-to-br from-sky-500/10 to-blue-500/5 border-sky-300 hover:border-sky-500 hover:shadow-md' 
-                        : 'bg-gradient-to-br from-cyan-500/10 to-sky-500/5 border-cyan-300 hover:border-cyan-500 hover:shadow-md'
-                    }`}
-                  >
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-start">
-                        <span className={`text-[9px] px-2.5 py-0.8 font-display font-bold uppercase tracking-wider text-stone-50 ${
-                          isMain ? 'bg-sky-700' : 'bg-cyan-700'
-                        }`}>
-                          {branch.type}
-                        </span>
-                        <MapPin className={`w-4 h-4 ${isMain ? 'text-sky-600' : 'text-cyan-600'}`} />
-                      </div>
-                      
-                      <h3 className="text-sm font-display font-bold uppercase tracking-wider text-stone-950">
-                        {branch.name}
-                      </h3>
-                      
-                      <p className="text-xs text-stone-600 font-sans font-medium leading-relaxed">
-                        {branch.address}
-                      </p>
-                      
-                      <p className="text-[10px] text-stone-800 font-mono font-semibold uppercase tracking-wide">
-                        📍 Landmark: {branch.landmark}
-                      </p>
-                    </div>
-
-                    <div className={`pt-4 border-t ${isMain ? 'border-sky-200/50' : 'border-cyan-200/50'}`}>
-                      <a
-                        id={`branch-nav-${branch.type.toLowerCase().replace(' ', '-')}`}
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(branch.mapQuery)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`flex items-center justify-center gap-1.5 w-full py-2.5 font-display uppercase tracking-widest text-[9px] font-bold border transition duration-300 ${
-                          isMain 
-                            ? 'bg-sky-600 hover:bg-sky-700 text-white border-sky-500 hover:border-sky-600' 
-                            : 'bg-cyan-600 hover:bg-cyan-700 text-white border-cyan-500 hover:border-cyan-600'
-                        }`}
-                      >
-                        <Navigation className="w-3 h-3 text-stone-50" />
-                        <span>Google Map Directions</span>
-                      </a>
-                    </div>
-                  </div>
-                );
-              })}
+              {BRANCHES.map((branch, index) => (
+                <BranchCard key={branch.name} branch={branch} isMain={index === 0} />
+              ))}
             </div>
 
             {/* Helpdesk Contacts */}
@@ -197,10 +169,11 @@ export default function ContactPortal() {
                 <button
                   id="contact-submit-btn"
                   type="submit"
-                  className="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white text-[10px] font-display uppercase tracking-widest font-bold shadow-md transition-all duration-300 transform hover:-translate-y-0.5 cursor-pointer"
+                  disabled={submitting}
+                  className="flex items-center justify-center gap-2 w-full py-3 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 disabled:opacity-60 text-white text-[10px] font-display uppercase tracking-widest font-bold shadow-md transition-all duration-300 transform hover:-translate-y-0.5 cursor-pointer"
                 >
                   <MessageSquare className="w-3.5 h-3.5" />
-                  <span>Send WhatsApp Inquiry</span>
+                  <span>{submitting ? 'Sending...' : 'Send WhatsApp Inquiry'}</span>
                 </button>
               </form>
             </div>
